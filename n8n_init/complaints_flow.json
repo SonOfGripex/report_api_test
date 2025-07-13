@@ -1,0 +1,225 @@
+{
+  "name": "Complaints Flow",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "={{$env.API_BASE_URL}}/complaint",
+        "options": {
+          "splitIntoItems": true
+        },
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 1"
+            }
+          ]
+        },
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "status_filter",
+              "value": "open"
+            }
+          ]
+        }
+      },
+      "name": "Fetch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -1560,
+        200
+      ],
+      "id": "b6c4aa06-ec75-4b7d-ba9e-9d33b77e8520"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json.category}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "оплата",
+              "output": 1
+            },
+            {
+              "value2": "техническая"
+            }
+          ]
+        }
+      },
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        -1300,
+        180
+      ],
+      "id": "8a18c00e-a87c-4798-b026-e5bd185fc47d",
+      "alwaysOutputData": true,
+      "executeOnce": false,
+      "retryOnFail": false,
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "sheetId": "1MVfiduqY2FGQS-cKy5lYBHYZI38K07QH1zYsJ6mczMU",
+        "rawData": true,
+        "options": {}
+      },
+      "name": "Add Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [
+        -1100,
+        440
+      ],
+      "id": "7856d78a-a42b-4689-b61b-ba802ba21dc0",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleApi": {
+          "id": "SJqZMnQPhQVMed8Q",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "requestMethod": "PATCH",
+        "url": "={{$env.API_BASE_URL}}/complaint/{{$json[\"id\"]}}",
+        "options": {},
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 1"
+            }
+          ]
+        }
+      },
+      "name": "Close",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        -980,
+        200
+      ],
+      "id": "e0eed29b-1d78-40e8-b187-8d5471e61434"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1800,
+        200
+      ],
+      "id": "5cc88457-475b-403e-8ae3-b38d346996ad"
+    },
+    {
+      "parameters": {
+        "chatId": "={{$env.TELEGRAM_CHAT_ID}}",
+        "text": "=Тех-жалоба #{{$json[\"id\"]}}\nНастроение: {{$json[\"sentiment\"]}}\nТекст жалобы: {{$json[\"text\"]}}\n-----------------------------------\nВремя поступления: {{$json[\"timestamp\"]}}\nЛокация: {{$json[\"ip_country\"]}}",
+        "additionalFields": {}
+      },
+      "name": "Send a text message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        -1100,
+        -20
+      ],
+      "id": "0740e530-fca3-41f5-84b2-3e76daad4bf2",
+      "credentials": {
+        "telegramApi": {
+          "id": "ndLdaXWc6ry15UZw",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Fetch": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Close",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Close",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Fetch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3798f14a-9c92-4f18-9343-a271dcb037f2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2bd76372212fc8610ddb82afe4bdf946542b98da360714a2bf7c46292ceea6cd"
+  },
+  "id": "vKOb80AU2fN839FR",
+  "tags": []
+}
